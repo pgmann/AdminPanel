@@ -44,9 +44,9 @@ If you are interested in enabling this feature, follow the steps below:
 2. Create the tables in your database:
     ```mysql
     CREATE TABLE afk_kick_log (
-    uuid VARCHAR(36),
-       name VARCHAR(20),
-       time DATETIME
+        uuid VARCHAR(36),
+        name VARCHAR(20),
+        time DATETIME
     );
     ```
 3. Populate `config.yml` with your host, port, table name, username and password.
