@@ -6,7 +6,7 @@ An admin GUI panel plugin with lots of useful commands to help you manage your M
 
 ![Admin Panel Command GUI](https://raw.githubusercontent.com/pgmann/AdminPanel/master/screenshots/2.png)
 * Manage your players using the handy GUI interface - open it with the `/panel` command
-    * Requires `adminpanel.command` permission to use (default: op)
+    * Requires `adminpanel.gui` permission to use (default: op)
     * Actions are color coded from least severe to most severe:
         * Blue: Teleport a player to a safe random location (within 10,000 blocks of the spawn point)
         * Yellow: Control whether a player can break/place blocks by setting them to adventure mode
@@ -30,7 +30,7 @@ There are more screenshots available in the [screenshots folder](https://github.
 
 Requires Spigot v1.14 or above. Older versions are not supported.
 
-Basic installation involves dragging the plugin `AdminPanel.jar` into your server's `plugins` folder and restarting/reloading.
+Prebuilt releases of the project can be found on the [Github releases page](https://github.com/pgmann/AdminPanel/releases). Basic installation involves dragging the plugin `AdminPanel-<version>.jar` into your server's `plugins` folder and restarting/reloading.
 
 All permissions are granted to server operators by default.
 See the previous section for a list of all individual permission nodes.
