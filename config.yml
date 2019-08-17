@@ -1,0 +1,9 @@
+db:
+  enabled: false
+  host: localhost
+  port: 3306
+  ssl: false
+  name: adminpanel
+  user: root
+  pass: root
+  afk_table: afk_kick_log

@@ -1,6 +1,7 @@
 package me.pgmann.adminpanel;
 
 import com.google.common.collect.ImmutableList;
+import me.pgmann.adminpanel.db.APDatabase;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -16,15 +17,24 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.*;
 
 public class AdminPanel extends JavaPlugin {
+    private AdminPanel inst;
     private APCommand commands;
-    static String rawPrefix = ChatColor.GOLD + "AdminPanel" + ChatColor.WHITE;
-    static String prefix = ChatColor.WHITE + "[" + rawPrefix + ChatColor.WHITE + "] ";
+    private APDatabase db;
+    public static String rawPrefix = ChatColor.GOLD + "AdminPanel" + ChatColor.WHITE;
+    public static String prefix = ChatColor.WHITE + "[" + rawPrefix + ChatColor.WHITE + "] ";
     static final List<Material> UNSAFE_BLOCK_MATERIALS = ImmutableList.of(Material.AIR, Material.WATER, Material.LAVA, Material.FIRE, Material.CAMPFIRE, Material.CACTUS);
     static HashMap<UUID, APPlayer> players = new HashMap<>();
 
     @Override
     public void onEnable() {
+        inst = this;
         getServer().getConsoleSender().sendMessage(rawPrefix + " by " + ChatColor.GOLD + "pgmann" + ChatColor.WHITE + " is enabled!");
+
+        // Copy/load default config
+        saveDefaultConfig();
+
+        // Register the DB manager
+        db = new APDatabase(getConfig().getConfigurationSection("db"));
 
         // Register the command listener
         commands = new APCommand();
@@ -46,7 +56,9 @@ public class AdminPanel extends JavaPlugin {
             public void run() {
                 for(APPlayer player : players.values()) {
                     if(player.afk) {
-                        // TODO log to DB
+                        // Log event to DB
+                        db.insertAfkEvent(inst, player.player.getUniqueId(), player.player.getName());
+                        // Kick player from server
                         player.player.kickPlayer("Kicked for being AFK");
                     }
                     player.afk = true; // player is afk until proven otherwise
