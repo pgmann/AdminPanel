@@ -1,0 +1,28 @@
+name: AdminPanel
+main: me.pgmann.adminpanel.AdminPanel
+version: '1.0'
+api-version: '1.14'
+description: "An admin GUI panel with lots of useful commands to help you manage your server"
+author: pgmann
+commands:
+  panel:
+    description: 'See [/panel] for help'
+    usage: 'An error occurred while loading the plugin! Please report this bug.'
+    aliases: ap
+permissions:
+  adminpanel.*:
+    description: Allows you to use all AdminPanel commands.
+    children:
+      adminpanel.gui: true
+      adminpanel.admin: true
+      adminpanel.sidebar: true
+    default: false
+  adminpanel.gui:
+    description: Allows you to open and use the Admin Panel GUI.
+    default: op
+  adminpanel.admin:
+    description: Counts you as an admin in the sidebar online admins section
+    default: op
+  adminpanel.sidebar:
+    description: Shows the sidebar which displays online players and online admins counts
+    default: op
