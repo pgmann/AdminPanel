@@ -13,11 +13,12 @@ An admin GUI panel plugin with lots of useful commands to help you manage your M
         * Orange: Kick a player
         * Red: Kill a player
         * Black: Ban a player
-
+---
 ![Online stats sidebar](https://raw.githubusercontent.com/pgmann/AdminPanel/master/screenshots/3.png)
 * Get a side panel that displays current online player and online admin count
     * Requires `adminpanel.sidebar` permission to see sidebar (default: op)
     * Requires `adminpanel.admin` to be counted in the 'online admins' count (default: op)
+---
 * Save server resources by kicking inactive players. Players who don't move for 2 minutes will be kicked from the server.
     * This can be logged to a MySQL DB for auditing purposes.
 
