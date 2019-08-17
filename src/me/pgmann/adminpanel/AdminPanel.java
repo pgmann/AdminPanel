@@ -84,7 +84,7 @@ public class AdminPanel extends JavaPlugin {
         // show the player a double chest full of player heads from online players
         Inventory inv = Bukkit.createInventory(null, 54, AdminPanel.rawPrefix + ChatColor.DARK_GRAY + " - Target Selector");
         Player[] players = Bukkit.getOnlinePlayers().toArray(new Player[0]);
-        for (int i = 0; i < 45 && i < players.length; i++) {
+        for (int i = 0; i < inv.getSize() && i < players.length; i++) {
             Player target = players[i];
             ItemStack skull = new ItemStack(Material.PLAYER_HEAD, 1);
             SkullMeta meta = (SkullMeta) skull.getItemMeta();
@@ -98,7 +98,6 @@ public class AdminPanel extends JavaPlugin {
     }
 
     private static Player getTargetFromSkull(ItemStack targetSkull) {
-        // TODO: ensure skull without lore isn't in bottom inv
         String targetName = targetSkull.getItemMeta().getLore().get(0);
         return Bukkit.getPlayerExact(targetName);
     }

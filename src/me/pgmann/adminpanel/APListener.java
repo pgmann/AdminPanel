@@ -34,13 +34,19 @@ public class APListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     protected void onInventoryClick(final InventoryClickEvent e) {
+        // Ensure the event is intended for this plugin
         if (!(e.getWhoClicked() instanceof Player)) return;
         Player player = (Player) e.getWhoClicked();
         if (!e.getView().getTitle().startsWith(AdminPanel.rawPrefix)) return;
         if (e.getCurrentItem() == null) return;
+        if (e.getClickedInventory().getSize() != 54) {
+            // bottom inventory has been clicked - cancel and ignore
+            e.setCancelled(true);
+            return;
+        }
 
+        // Determine the action to perform based on the item type
         ItemStack itemStack = e.getCurrentItem();
-
         if (itemStack.getType() == Material.PLAYER_HEAD) {
             // Target selector GUI
             AdminPanel.showTargetActionsInventory(player, itemStack);
