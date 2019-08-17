@@ -39,7 +39,7 @@ public class APListener implements Listener {
         Player player = (Player) e.getWhoClicked();
         if (!e.getView().getTitle().startsWith(AdminPanel.rawPrefix)) return;
         if (e.getCurrentItem() == null) return;
-        if (e.getClickedInventory().getSize() != 54) {
+        if (!e.getClickedInventory().equals(e.getView().getTopInventory())) {
             // bottom inventory has been clicked - cancel and ignore
             e.setCancelled(true);
             return;
