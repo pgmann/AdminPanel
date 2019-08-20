@@ -5,7 +5,7 @@ An admin GUI panel plugin with lots of useful commands to help you manage your M
 ## Features
 
 ![Admin Panel Command GUI](https://raw.githubusercontent.com/pgmann/AdminPanel/master/screenshots/2.png)
-* Manage your players using the handy GUI interface - open it with the `/panel` command
+* Manage your players using the handy GUI interface - open it with the `/panel [target name]` command
     * Requires `adminpanel.gui` permission to use (default: op)
     * Actions are color coded from least severe to most severe:
         * Blue: Teleport a player to a safe random location (within 10,000 blocks of the spawn point)
