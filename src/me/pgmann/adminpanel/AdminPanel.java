@@ -54,8 +54,10 @@ public class AdminPanel extends JavaPlugin {
         new BukkitRunnable() {
             @Override
             public void run() {
-                for(APPlayer player : players.values()) {
-                    if(player.afk) {
+                // Check if each player has moved since last time the task ran
+                // (array conversion prevents ConcurrentModificationException as the array is not modified)
+                for (APPlayer player : players.values().toArray(new APPlayer[0])) {
+                    if (player.afk) {
                         // Log event to DB
                         db.insertAfkEvent(inst, player.player.getUniqueId(), player.player.getName());
                         // Kick player from server
@@ -70,21 +72,55 @@ public class AdminPanel extends JavaPlugin {
     @Override
     public void onDisable() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.hasPermission("adminpanel.sidebar"))
-                player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         }
         getServer().getConsoleSender().sendMessage(rawPrefix + " is now disabled.");
     }
 
+    /**
+     * Manages the sidebar scoreboard for all online players,
+     * making sure it is always showing the correct count
+     */
     public static void updateScoreboards() {
-        for (APPlayer player : players.values()) player.updateScoreboard();
+        updateScoreboards(null);
     }
 
+    /**
+     * Manages the sidebar scoreboard for all online players,
+     * making sure it is always showing the correct count
+     *
+     * @param leavingPlayer when not null the specified player will be removed from the online counts
+     */
+    public static void updateScoreboards(Player leavingPlayer) {
+        for (APPlayer player : players.values()) player.updateScoreboard(leavingPlayer);
+    }
+
+    /**
+     * Creates and displays a GUI to allow the player to pick a target to execute commands on.
+     * A target is selected by the user clicking on a head in the inventory.
+     *
+     * @param player the user to show the inventory GUI to
+     */
     public static void showTargetSelectorInventory(Player player) {
+        showTargetSelectorInventory(player, 1);
+    }
+
+    /**
+     * Creates and displays a GUI to allow the player to pick a target to execute commands on.
+     * A target is selected by the user clicking on a head in the inventory.
+     *
+     * @param player the user to show the inventory GUI to
+     * @param page the page number for the inventory
+     */
+    public static void showTargetSelectorInventory(Player player, int page) {
         // show the player a double chest full of player heads from online players
-        Inventory inv = Bukkit.createInventory(null, 54, AdminPanel.rawPrefix + ChatColor.DARK_GRAY + " - Target Selector");
+        Inventory inv = Bukkit.createInventory(null, 54, rawPrefix + ChatColor.DARK_GRAY + " - Target Selector");
         Player[] players = Bukkit.getOnlinePlayers().toArray(new Player[0]);
-        for (int i = 0; i < inv.getSize() && i < players.length; i++) {
+        // to test with 100 players: players = new Player[100]; Arrays.fill(players, player);
+        int perPage = inv.getSize() - 9;
+        int startI = (page - 1) * perPage;
+        // display a page-ful of possible targets
+        for (int i = startI; i < startI + perPage && i < players.length; i++) {
             Player target = players[i];
             ItemStack skull = new ItemStack(Material.PLAYER_HEAD, 1);
             SkullMeta meta = (SkullMeta) skull.getItemMeta();
@@ -94,75 +130,133 @@ public class AdminPanel extends JavaPlugin {
             skull.setItemMeta(meta);
             inv.addItem(skull);
         }
+        // set pagination controls in bottom row of inventory
+        boolean hasPrev = startI > 0;
+        boolean hasNext = startI + perPage < players.length;
+        for (int i = perPage; i < inv.getSize(); i++) {
+            if (i == perPage && hasPrev)
+                // Prev page
+                inv.setItem(i, makeCustomItem(
+                        Material.GREEN_STAINED_GLASS,
+                        ChatColor.GREEN + "Previous Page",
+                        ChatColor.GRAY + "Go to page " + (page - 1)
+                ));
+            else if (i == inv.getSize() - 1 && hasNext)
+                // Next page
+                inv.setItem(i, makeCustomItem(
+                        Material.GREEN_STAINED_GLASS,
+                        ChatColor.GREEN + "Next Page",
+                        ChatColor.GRAY + "Go to page " + (page + 1)
+                ));
+            else
+                inv.setItem(i, makeCustomItem(Material.WHITE_STAINED_GLASS, " "));
+        }
         player.openInventory(inv);
     }
 
-    private static Player getTargetFromSkull(ItemStack targetSkull) {
+    /**
+     * Converts an item stack into a player object assuming:
+     * - the name of the target player is set as the lore text
+     * - the target player is currently online
+     *
+     * @param targetSkull the item that has a player name as the lore text
+     * @return a player if the target could be found, or else null
+     */
+    public static Player getTargetFromSkull(ItemStack targetSkull) {
         String targetName = targetSkull.getItemMeta().getLore().get(0);
         return Bukkit.getPlayerExact(targetName);
     }
 
+    /**
+     * A convenience helper for making an item for use in a GUI.
+     *
+     * @param material    the type of item to use
+     * @param displayName the name of the item
+     * @return the custom-made ItemStack ready for adding to an inventory
+     */
     static ItemStack makeCustomItem(Material material, String displayName) {
         return makeCustomItem(material, displayName, (String) null);
     }
 
+    /**
+     * A convenience helper for making an item for use in a GUI.
+     *
+     * @param material    the type of item to use
+     * @param displayName the name of the item
+     * @param lore        the more detailed description text to display below the name
+     * @return the custom-made ItemStack ready for adding to an inventory
+     */
     static ItemStack makeCustomItem(Material material, String displayName, String lore) {
         return makeCustomItem(material, displayName, new String[]{lore});
     }
 
+    /**
+     * A convenience helper for making an item for use in a GUI.
+     *
+     * @param material    the type of item to use
+     * @param displayName the name of the item
+     * @param lore        the more detailed description text to display below the name
+     * @return the custom-made ItemStack ready for adding to an inventory
+     */
     static ItemStack makeCustomItem(Material material, String displayName, String[] lore) {
         ItemStack item = new ItemStack(material, 1);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(displayName);
-        if (lore != null) meta.setLore(Arrays.asList(lore));
+        if (lore.length > 0 && lore[0] != null) meta.setLore(Arrays.asList(lore));
         item.setItemMeta(meta);
         return item;
     }
 
-    public static void showTargetActionsInventory(Player player, ItemStack targetSkull) {
-        Player target = getTargetFromSkull(targetSkull);
+    /**
+     * Creates and displays an inventory GUI to the player containing a list of admin actions,
+     * represented as different wool colors based on the severity of the actions they take when clicked.
+     *
+     * @param player the player to show the inventory GUI to
+     * @param target the player the action will be performed on
+     */
+    public static void showTargetActionsInventory(Player player, Player target) {
         if (target == null) {
             // target has left the game - refresh main GUI instead
-            AdminPanel.showTargetSelectorInventory(player);
+            showTargetSelectorInventory(player);
             return;
         }
 
         // Show GUI Actions screen: click an item to perform an action on the target
-        Inventory inv = Bukkit.createInventory(null, 9, AdminPanel.rawPrefix + ChatColor.DARK_GRAY + " - Manage " + target.getName());
+        Inventory inv = Bukkit.createInventory(null, 9, rawPrefix + ChatColor.DARK_GRAY + " - Manage " + target.getName());
         // Teleport target to a random location
-        inv.addItem(AdminPanel.makeCustomItem(
+        inv.addItem(makeCustomItem(
                 Material.LIGHT_BLUE_WOOL,
                 ChatColor.BLUE + "Teleport " + ChatColor.WHITE + target.getDisplayName(),
                 ChatColor.GRAY + "Target is moved to a safe random location"
         ));
         // Set target to survival/adventure mode
         if (target.getGameMode() == GameMode.ADVENTURE) {
-            inv.addItem(AdminPanel.makeCustomItem(
+            inv.addItem(makeCustomItem(
                     Material.LIME_WOOL,
                     ChatColor.GREEN + "Read-write mode " + ChatColor.WHITE + target.getDisplayName(),
                     ChatColor.GRAY + "Update target's gamemode to survival mode"
             ));
         } else {
-            inv.addItem(AdminPanel.makeCustomItem(
+            inv.addItem(makeCustomItem(
                     Material.YELLOW_WOOL,
                     ChatColor.YELLOW + "Read-only mode " + ChatColor.WHITE + target.getDisplayName(),
                     ChatColor.GRAY + "Update target's gamemode to adventure mode"
             ));
         }
         // Kick target
-        inv.addItem(AdminPanel.makeCustomItem(
+        inv.addItem(makeCustomItem(
                 Material.ORANGE_WOOL,
                 ChatColor.GOLD + "Kick " + ChatColor.WHITE + target.getDisplayName(),
                 ChatColor.GRAY + "Disconnect the target from the server"
         ));
         // Kill target
-        inv.addItem(AdminPanel.makeCustomItem(
+        inv.addItem(makeCustomItem(
                 Material.RED_WOOL,
                 ChatColor.RED + "Kill " + ChatColor.WHITE + target.getDisplayName(),
                 ChatColor.GRAY + "Cause the target to die"
         ));
         // Ban target
-        inv.addItem(AdminPanel.makeCustomItem(
+        inv.addItem(makeCustomItem(
                 Material.BLACK_WOOL,
                 ChatColor.DARK_RED + "Ban " + ChatColor.WHITE + target.getDisplayName(),
                 ChatColor.GRAY + "Block the target from the server"

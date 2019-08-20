@@ -20,18 +20,34 @@ public class APPlayer {
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
     }
 
+    /**
+     * Manages the sidebar scoreboard for the player, making sure it is
+     * always showing the correct count
+     */
     protected void updateScoreboard() {
-        if (player.hasPermission("adminpanel.sidebar")) {
+        updateScoreboard(null);
+    }
+
+    /**
+     * Manages the sidebar scoreboard for the player, making sure it is
+     * always showing the correct count
+     * @param leavingPlayer when not null the specified player will be removed from the online counts
+     */
+    protected void updateScoreboard(Player leavingPlayer) {
+        if (!player.equals(leavingPlayer) && player.hasPermission("adminpanel.sidebar")) {
+            // update 'scores' (online counts) and display name on sidebar
             Objective objective = board.getObjective("adminpanel");
             objective.setDisplayName(player.getDisplayName());
             Score onlinePlayers = objective.getScore(ChatColor.GREEN + "Online Players");
-            onlinePlayers.setScore(Bukkit.getOnlinePlayers().size());
+            onlinePlayers.setScore(Bukkit.getOnlinePlayers().size() - (leavingPlayer != null ? 1 : 0));
             Score onlineAdmins = objective.getScore(ChatColor.RED + "Online Admins");
             int adminsCount = 0;
-            for (Player player : Bukkit.getOnlinePlayers()) if (player.hasPermission("adminpanel.admin")) adminsCount++;
+            for (Player player : Bukkit.getOnlinePlayers())
+                if (!player.equals(leavingPlayer) && player.hasPermission("adminpanel.admin")) adminsCount++;
             onlineAdmins.setScore(adminsCount);
             player.setScoreboard(board);
         } else {
+            // remove this plugin's scoreboard - use the main vanilla one instead
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         }
     }

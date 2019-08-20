@@ -22,9 +22,8 @@ public class APListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     protected void onPlayerQuit(final PlayerQuitEvent e) {
+        AdminPanel.updateScoreboards(e.getPlayer());
         AdminPanel.players.remove(e.getPlayer().getUniqueId());
-        if (e.getPlayer().hasPermission("adminpanel.sidebar")) e.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
-        AdminPanel.updateScoreboards();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -47,13 +46,20 @@ public class APListener implements Listener {
 
         // Determine the action to perform based on the item type
         ItemStack itemStack = e.getCurrentItem();
-        if (itemStack.getType() == Material.PLAYER_HEAD) {
+        if (itemStack.getType() == Material.GREEN_STAINED_GLASS) {
+            // Target selector pagination
+            String[] lore = itemStack.getItemMeta().getLore().get(0).split(" ");
+            int page = Integer.parseInt(lore[lore.length - 1]);
+            AdminPanel.showTargetSelectorInventory(player, page);
+        } else if (itemStack.getItemMeta().getDisplayName().equals(" ")) {
+            // Target selector divider, ignore
+        } else if (itemStack.getType() == Material.PLAYER_HEAD) {
             // Target selector GUI
-            AdminPanel.showTargetActionsInventory(player, itemStack);
+            AdminPanel.showTargetActionsInventory(player, AdminPanel.getTargetFromSkull(itemStack));
         } else {
             // Target actions GUI
-            // last word in inventory title is target name
-            String[] title = e.getView().getTitle().split(" ");
+            // get target name from end of inventory title (4th word to end of string)
+            String[] title = e.getView().getTitle().split(" ", 4);
             String targetName = title[title.length - 1];
             Player target = Bukkit.getPlayerExact(targetName);
             if (target == null) {
@@ -73,7 +79,7 @@ public class APListener implements Listener {
                             int x = random.nextInt(maxX - minX) + minX + 1;
                             int z = random.nextInt(maxZ - minZ) + minZ + 1;
                             loc = new Location(world, x - 0.5, world.getHighestBlockYAt(x, z), z - 0.5); // gets block above the highest block
-                        } while(AdminPanel.UNSAFE_BLOCK_MATERIALS.contains(loc.clone().add(0, -1, 0).getBlock().getType()));
+                        } while (AdminPanel.UNSAFE_BLOCK_MATERIALS.contains(loc.clone().add(0, -1, 0).getBlock().getType()));
                         target.teleport(loc);
                         player.sendMessage(AdminPanel.prefix + ChatColor.WHITE + target.getDisplayName() + ChatColor.BLUE + " has been teleported to " + loc.getX() + ", " + loc.getY() + ", " + loc.getZ());
                         break;
